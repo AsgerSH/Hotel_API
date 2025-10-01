@@ -24,6 +24,8 @@
         <slf4j-api.version>2.0.16</slf4j-api.version>
         <logback.version>1.5.7</logback.version>
         <rest-assured.version>5.3.2</rest-assured.version>
+        <jbcrypt.version>0.4</jbcrypt.version>
+
 
         <!-- DATABASE PROJECT NAME ON SERVER  -->
         <!--        <db.name>sample_demo</db.name>-->
@@ -38,6 +40,12 @@
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
             <version>${javalin.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>${jbcrypt.version}</version>
         </dependency>
 
         <dependency>

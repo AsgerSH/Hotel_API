@@ -14,6 +14,8 @@ public class HotelRoutes {
             get("/", controller::getAllHotels);
             get("/{id}", controller::getHotelById);
             get("/{id}/rooms", controller::getRoomsForHotel);
+
+            // CRUD
             post("/", controller::createHotel);
             put("/{id}", controller::updateHotel);
             delete("/{id}", controller::deleteHotel);

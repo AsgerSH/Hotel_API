@@ -3,6 +3,8 @@ package app.config;
 import app.entities.Hotel;
 import app.entities.Room;
 import app.populators.HotelPopulator;
+import app.security.Role;
+import app.security.User;
 import app.utils.Utils;
 
 import jakarta.persistence.EntityManagerFactory;
@@ -46,6 +48,8 @@ public class HibernateConfig {
         configuration.addPackage("app.entities");
         configuration.addAnnotatedClass(Hotel.class);
         configuration.addAnnotatedClass(Room.class);
+        configuration.addAnnotatedClass(User.class);
+        configuration.addAnnotatedClass(Role.class);
     }
 
     private static EntityManagerFactory createEMF(boolean forTest) {

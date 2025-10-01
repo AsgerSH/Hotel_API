@@ -4,10 +4,13 @@ import app.config.HibernateConfig;
 import app.dtos.HotelDTO;
 import app.dtos.RoomDTO;
 import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.PersistentObjectException;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
 
+import static java.lang.Double.parseDouble;
+import static java.lang.Integer.parseInt;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HotelDAOTest {
@@ -112,4 +115,20 @@ class HotelDAOTest {
         List<RoomDTO> afterRemove = dao.getRoomsForHotel(hotel.getId());
         assertEquals(0, afterRemove.size());
     }
+
+    @Test
+    void testCreateHotelWithOtherIdThanZero(){
+        int id = 1;
+        assertThrows(PersistentObjectException.class, () -> dao.createHotel(
+                        new HotelDTO(
+                                id,
+                                "Hotel no ID",
+                                "Test street",
+                                3,
+                                3)),
+                "Hotel couldn't be created with other ID than 0");
+
+    }
 }
+
+

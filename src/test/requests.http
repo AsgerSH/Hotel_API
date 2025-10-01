@@ -4,24 +4,23 @@ GET http://localhost:7076/api/v1/
 ###
 
 ### Get all highscores
-GET http://localhost:7076/api/v1/sample2
+GET http://localhost:7076/api/v1/hotel
 
 ###
 
 ### Create new highscores (accepts array)
 #OBS husk at her er sample1 den routing med CRUD
-POST http://localhost:7076/api/v1/sample1
+POST http://localhost:7076/api/v1/hotel
 Content-Type: application/json
 
 [
-  {
-    "userName": "Alice",
-    "score": 1500
-  },
-  {
-    "userName": "Bob", 
-    "score": 2000
-  }
+    {
+      id: 100,
+      name: "Test Hotel id 100",
+      address: "Kongens Nytorv 34, 1050 København",
+      rooms: 30,
+      stars: 5
+    }
 ]
 
 ###

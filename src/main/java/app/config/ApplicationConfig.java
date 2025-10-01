@@ -14,6 +14,9 @@ public class ApplicationConfig {
 
     public static void configuration(JavalinConfig config){
         config.showJavalinBanner = false;
+        config.bundledPlugins.enableDevLogging();
+        config.staticFiles.add("/public");
+        config.http.defaultContentType = "application/json";
         config.bundledPlugins.enableRouteOverview("/routes");
         config.router.contextPath = "/api/v1"; // base path for all endpoints
         config.router.apiBuilder(routes.getRoutes());
