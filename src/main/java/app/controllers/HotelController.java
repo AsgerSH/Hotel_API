@@ -78,7 +78,7 @@ public class HotelController {
         }
 
         hotelDAO.deleteHotel(id);
-        logger.info("Deleted hotel {}", id);
+        logger.info("Deleted hotel id {}", id);
         ctx.json(hotel);
 
     }

@@ -1,24 +1,42 @@
 package app.security.rest;
 
-import io.javalin.apibuilder.EndpointGroup;
 
-import static io.javalin.apibuilder.ApiBuilder.path;
-import static io.javalin.apibuilder.ApiBuilder.post;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import app.utils.Utils;
+import io.javalin.apibuilder.EndpointGroup;
+import io.javalin.security.RouteRole;
+
+import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class SecurityRoutes {
-    ISecurityController securityController = new SecurityController();
+    static ObjectMapper jsonMapper = new Utils().getObjectMapper();
+    private SecurityController securityController = new SecurityController();
 
-    public EndpointGroup getSecurityRoutes = () -> {
+    public EndpointGroup getSecurityRoute = () -> {
         path("/auth", () -> {
-            //          before(securityController::authenticate);
+//          before(securityController::authenticate);
 //          get("/", personEntityController.getAll(), Role.ANYONE);
-//            get("/", personEntityController.getAll());
-//            get("/resetdata", personEntityController.resetData());
-//            get("/{id}", personEntityController.getById());
+//                get("/", personEntityController.getAll());
+//                get("/resetdata", personEntityController.resetData());
+//                get("/{id}", personEntityController.getById());
 
             post("/login", securityController.login());
-//            put("/{id}", personEntityController.update());
-//            delete("/{id}", personEntityController.delete());
+            post("/register", securityController.register());
+//                put("/{id}", personEntityController.update());
+//                delete("/{id}", personEntityController.delete());
         });
     };
+
+    public static EndpointGroup getSecuredRoutes() {
+        return () -> {
+            path("/protected", () -> {
+                get("/user_demo", (ctx) -> ctx.json(jsonMapper.createObjectNode().put("msg", "Hello from USER Protected")), Role.USER);
+                get("/admin_demo", (ctx) -> ctx.json(jsonMapper.createObjectNode().put("msg", "Hello from ADMIN Protected")), Role.ADMIN);
+            });
+        };
+    }
+
+    public enum Role implements RouteRole {ANYONE, USER, ADMIN}
 }
+
+

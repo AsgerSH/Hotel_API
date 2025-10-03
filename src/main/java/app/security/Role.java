@@ -11,7 +11,6 @@ import java.util.Set;
 @Setter
 @Table(name = "roles")
 public class Role {
-
     @Id
     @Column(name = "rolename", nullable = false)
     private String rolename;

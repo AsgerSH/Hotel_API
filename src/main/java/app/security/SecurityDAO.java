@@ -26,6 +26,11 @@ public class SecurityDAO implements ISecurityDAO {
     @Override
     public User createUser(String username, String password) {
         try (EntityManager em = emf.createEntityManager()) {
+            User existing = em.find(User.class, username);
+            if (existing != null) {
+                return existing;
+            }
+
             User user = new User(username, password);
             em.getTransaction().begin();
             em.persist(user);

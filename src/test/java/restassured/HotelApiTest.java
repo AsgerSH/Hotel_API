@@ -45,7 +45,6 @@ class HotelApiTest {
                 .log().all()
                 .body("id", equalTo(1))
                 .body("name", notNullValue());
-
     }
 
     @Test
