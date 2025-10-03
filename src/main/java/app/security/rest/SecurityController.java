@@ -1,24 +1,42 @@
 package app.security.rest;
 
+import app.core.exceptions.ApiException;
+import app.security.dao.ISecurityDAO;
+import app.security.dao.SecurityDAO;
+import app.security.entities.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dk.bugelhartmann.TokenSecurity;
 import dk.bugelhartmann.TokenVerificationException;
 import dk.bugelhartmann.UserDTO;
-import app.exceptions.*;
 import app.config.HibernateConfig;
-import app.security.*;
-import app.utils.Utils;
+import app.core.utils.Utils;
 import io.javalin.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SecurityController implements ISecurityController {
-    ISecurityDAO securityDAO = new SecurityDAO(HibernateConfig.getEntityManagerFactory());
+    private static ISecurityDAO securityDAO;
     ObjectMapper objectMapper = new Utils().getObjectMapper();
     TokenSecurity tokenSecurity = new TokenSecurity();
+    private static SecurityController instance;
+    private static Logger logger = LoggerFactory.getLogger(SecurityController.class);
+
+
+    private SecurityController() {
+    }
+
+    public static SecurityController getInstance() { // Singleton because we don't want multiple instances of the same class
+        if (instance == null) {
+            instance = new SecurityController();
+        }
+        securityDAO = new SecurityDAO(HibernateConfig.getEntityManagerFactory());
+        return instance;
+    }
 
     private static String getToken(Context ctx) {
         String header = ctx.header("Authorization");
@@ -38,18 +56,21 @@ public class SecurityController implements ISecurityController {
                 .anyMatch(role -> allowedRoles.contains(role.toUpperCase()));
     }
 
+    private Set<String> extractRoleNames(User user) {
+        return user.getRoles().stream()
+                .map(role -> role.getRolename().toUpperCase())
+                .collect(Collectors.toSet());
+    }
+
     @Override
     public Handler login() {
         return ctx -> {
             User user = ctx.bodyAsClass(User.class);
             User verifiedUser = securityDAO.getVerifiedUser(user.getUsername(), user.getPassword());
 
-            Set<String> stringRoles = verifiedUser.getRoles()
-                    .stream()
-                    .map(role -> role.getRolename())
-                    .collect(Collectors.toSet());
+            Set<String> stringRoles = extractRoleNames(verifiedUser);
 
-            System.out.println("Succes for user: " + verifiedUser.getUsername());
+            logger.info("Login success for user: {}", verifiedUser.getUsername());
 
             UserDTO userDTO = new UserDTO(verifiedUser.getUsername(), stringRoles);
             String token = createToken(userDTO);
@@ -70,10 +91,7 @@ public class SecurityController implements ISecurityController {
             User verifiedUser = securityDAO.createUser(user.getUsername(), user.getPassword());
             User verifiedUserRole = securityDAO.addUserRole(verifiedUser.getUsername(), "USER");
 
-            Set<String> stringRoles = verifiedUserRole.getRoles()
-                    .stream()
-                    .map(role -> role.getRolename())
-                    .collect(Collectors.toSet());
+            Set<String> stringRoles = extractRoleNames(verifiedUserRole);
 
             UserDTO userDTO = new UserDTO(verifiedUserRole.getUsername(), stringRoles);
             String token = createToken(userDTO);
@@ -128,10 +146,15 @@ public class SecurityController implements ISecurityController {
         };
     }
 
+// New helper method so I can avoid repeating System.getenv in verifyToken and createToken
+    private String getConfigValue(String key) {
+        return (System.getenv("DEPLOYED") != null)
+                ? System.getenv(key)
+                : Utils.getPropertyValue(key, "config.properties");
+    }
+
     private UserDTO verifyToken(String token) {
-        String SECRET = (System.getenv("DEPLOYED") != null)
-                ? System.getenv("SECRET_KEY")
-                : Utils.getPropertyValue("SECRET_KEY", "config.properties");
+        String SECRET = getConfigValue("SECRET_KEY");
 
         try {
             if (tokenSecurity.tokenIsValid(token, SECRET) && tokenSecurity.tokenNotExpired(token)) {
@@ -140,27 +163,20 @@ public class SecurityController implements ISecurityController {
                 throw new UnauthorizedResponse("Token is not valid");
             }
         } catch (ParseException | TokenVerificationException e) {
+            logger.warn("Token verification failed: {}", e.getMessage());
             throw new ApiException(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized. Could not verify token");
         }
     }
 
     public String createToken(UserDTO user) {
         try {
-            String ISSUER;
-            String TOKEN_EXPIRE_TIME;
-            String SECRET_KEY;
+            String ISSUER = getConfigValue("ISSUER");
+            String TOKEN_EXPIRE_TIME = getConfigValue("TOKEN_EXPIRE_TIME");
+            String SECRET_KEY = getConfigValue("SECRET_KEY");
 
-            if (System.getenv("DEPLOYED") != null) {
-                ISSUER = System.getenv("ISSUER");
-                TOKEN_EXPIRE_TIME = System.getenv("TOKEN_EXPIRE_TIME");
-                SECRET_KEY = System.getenv("SECRET_KEY");
-            } else {
-                ISSUER = Utils.getPropertyValue("ISSUER", "config.properties");
-                TOKEN_EXPIRE_TIME = Utils.getPropertyValue("TOKEN_EXPIRE_TIME", "config.properties");
-                SECRET_KEY = Utils.getPropertyValue("SECRET_KEY", "config.properties");
-            }
             return tokenSecurity.createToken(user, ISSUER, TOKEN_EXPIRE_TIME, SECRET_KEY);
         } catch (Exception e) {
+            logger.warn("Token creation failed: {}", e.getMessage());
             throw new ApiException(500, "Could not create token");
         }
     }

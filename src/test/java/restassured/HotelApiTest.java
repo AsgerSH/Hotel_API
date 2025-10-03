@@ -1,7 +1,7 @@
 package restassured;
 
 import app.config.ApplicationConfig;
-import app.routes.Routes;
+import app.config.Routes;
 import app.security.rest.SecurityRoutes;
 import io.javalin.Javalin;
 import io.restassured.RestAssured;
@@ -16,16 +16,7 @@ class HotelApiTest {
 
     @BeforeAll
     static void setup() {
-        ApplicationConfig
-                .getInstance()
-                .initiateServer()
-                .checkSecurityRoles()
-                .setRoute(SecurityRoutes.getSecuredRoutes())
-                .setRoute(new Routes().getRoutes())
-                .setRoute(new SecurityRoutes().getSecurityRoute)
-                .startServer(7007)
-                .setCORS()
-                .setGeneralExceptionHandling(); // or 0 for random port
+        ApplicationConfig.startServer(7007);
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = 7070;
         RestAssured.basePath = "/api/v1";

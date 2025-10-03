@@ -1,0 +1,60 @@
+### Test root endpoint
+GET http://localhost:7076/api/v1/
+
+###
+
+### Get all highscores
+GET http://localhost:7076/api/v1/hotel
+
+###
+
+### Create new highscores (accepts array)
+#OBS husk at her er sample1 den routing med CRUD
+POST http://localhost:7076/api/v1/hotel
+Content-Type: application/json
+
+[
+    {
+      "id": 100,
+      "name": "Test Hotel id 100",
+      "address": "Kongens Nytorv 34, 1050 København",
+      "rooms": 30,
+      "stars": 5
+    }
+]
+
+###
+
+### Create single highscore
+POST http://localhost:7076/api/v1/sample1
+Content-Type: application/json
+
+[
+  {
+    "userName": "Charlie",
+    "score": 1750
+  }
+]
+
+###
+
+### Get specific highscore by ID (replace 1 with actual ID)
+GET http://localhost:7076/api/v1/sample1/1
+
+###
+
+### Update highscore by ID (replace 1 with actual ID)
+PUT http://localhost:7076/api/v1/sample1/1
+Content-Type: application/json
+
+{
+  "userName": "Alice Updated",
+  "score": 2500
+}
+
+###
+
+### Delete highscore by ID (replace 1 with actual ID)
+DELETE http://localhost:7076/api/v1/sample1/1
+
+###

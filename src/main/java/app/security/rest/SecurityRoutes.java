@@ -1,32 +1,27 @@
 package app.security.rest;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import app.utils.Utils;
+
+import app.core.utils.Utils;
 import io.javalin.apibuilder.EndpointGroup;
-import io.javalin.security.RouteRole;
+import app.security.enums.Role;
 
 import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class SecurityRoutes {
-    static ObjectMapper jsonMapper = new Utils().getObjectMapper();
-    private SecurityController securityController = new SecurityController();
+    private static ObjectMapper jsonMapper = new Utils().getObjectMapper();
+    private static final ISecurityController securityController = SecurityController.getInstance();
 
-    public EndpointGroup getSecurityRoute = () -> {
-        path("/auth", () -> {
+    public static EndpointGroup getSecurityRoutes() {
+        return () -> {
+            path("/auth", () -> {
 //          before(securityController::authenticate);
-//          get("/", personEntityController.getAll(), Role.ANYONE);
-//                get("/", personEntityController.getAll());
-//                get("/resetdata", personEntityController.resetData());
-//                get("/{id}", personEntityController.getById());
-
-            post("/login", securityController.login(), Role.ANYONE);
-            post("/register", securityController.register(), Role.ANYONE);
-//                put("/{id}", personEntityController.update());
-//                delete("/{id}", personEntityController.delete());
-        });
-    };
-
+                get("/test", ctx->ctx.json(jsonMapper.createObjectNode().put("msg",  "Hello from Open")), Role.ANYONE);
+                post("/login", securityController.login(), Role.ANYONE);
+                post("/register", securityController.register(), Role.ANYONE);
+            });
+        };
+    }
     public static EndpointGroup getSecuredRoutes() {
         return () -> {
             path("/protected", () -> {
@@ -35,8 +30,6 @@ public class SecurityRoutes {
             });
         };
     }
-
-    public enum Role implements RouteRole {ANYONE, USER, ADMIN}
 }
 
 

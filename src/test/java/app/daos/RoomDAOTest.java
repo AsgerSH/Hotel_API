@@ -1,8 +1,10 @@
 package app.daos;
 
 import app.config.HibernateConfig;
-import app.dtos.HotelDTO;
-import app.dtos.RoomDTO;
+import app.features.hotel.dao.HotelDAO;
+import app.features.hotel.dto.HotelDTO;
+import app.features.room.dao.RoomDAO;
+import app.features.room.dto.RoomDTO;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.*;
 
