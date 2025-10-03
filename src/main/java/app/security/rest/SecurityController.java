@@ -91,7 +91,7 @@ public class SecurityController implements ISecurityController {
             User verifiedUser = securityDAO.createUser(user.getUsername(), user.getPassword());
             User verifiedUserRole = securityDAO.addUserRole(verifiedUser.getUsername(), "USER");
 
-            Set<String> stringRoles = extractRoleNames(verifiedUser);
+            Set<String> stringRoles = extractRoleNames(verifiedUserRole);
 
             UserDTO userDTO = new UserDTO(verifiedUserRole.getUsername(), stringRoles);
             String token = createToken(userDTO);
@@ -154,7 +154,7 @@ public class SecurityController implements ISecurityController {
     }
 
     private UserDTO verifyToken(String token) {
-        String SECRET = getConfigValue("SECRET");
+        String SECRET = getConfigValue("SECRET_KEY");
 
         try {
             if (tokenSecurity.tokenIsValid(token, SECRET) && tokenSecurity.tokenNotExpired(token)) {
