@@ -1,7 +1,7 @@
 package app.core.exceptions;
 
-public class RoomNotFoundException extends RuntimeException {
+public class RoomNotFoundException extends ApiException {
     public RoomNotFoundException(String message) {
-        super(message);
+        super(404, message);
     }
 }

@@ -11,8 +11,8 @@ import jakarta.persistence.EntityManagerFactory;
 public class SecurityDAO implements ISecurityDAO {
     private final EntityManagerFactory emf;
 
-    public SecurityDAO(EntityManagerFactory emf) {
-        this.emf = emf;
+    public SecurityDAO(EntityManagerFactory _emf) {
+        emf = _emf;
     }
 
     @Override
@@ -34,8 +34,9 @@ public class SecurityDAO implements ISecurityDAO {
     public User createUser(String username, String password) {
         try (EntityManager em = emf.createEntityManager()) {
             User existing = em.find(User.class, username);
+
             if (existing != null) {
-                return existing;
+                throw new ValidationException("User already exists");
             }
 
             User user = new User(username, password);
@@ -62,16 +63,30 @@ public class SecurityDAO implements ISecurityDAO {
         try (EntityManager em = emf.createEntityManager()) {
             User foundUser = em.find(User.class, username);
             Role foundRole = em.find(Role.class, rolename);
-            if (foundUser == null || foundRole == null) {
+
+            if (foundUser == null) {
                 throw new EntityNotFoundException("User not found");
+            }
+            if (foundRole == null) {
+                throw new EntityNotFoundException("Role not found: " + rolename);
             }
 
             em.getTransaction().begin();
             foundUser.addRole(foundRole);
             em.getTransaction().commit();
-            return foundUser;
+
+            User reloaded = em.createQuery(
+                            "SELECT u FROM User u JOIN FETCH u.roles WHERE u.username = :username",
+                            User.class
+                    )
+                    .setParameter("username", username)
+                    .getSingleResult();
+
+            return reloaded;
         }
     }
+
+
 
     public static void main(String[] args) {
         EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();

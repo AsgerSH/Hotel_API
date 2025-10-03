@@ -45,11 +45,11 @@ POST http://{{url}}/auth/login
 
 ###
 GET http://{{url}}/protected/admin_demo
-AUTHORIZATION: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcIkFzZ2VyIFMuIEjDuGZmbmVyXCIiLCJzdWIiOiJ1c2VyMSIsImV4cCI6MTc1OTQ5NTM3NSwicm9sZXMiOiJVU0VSIiwidXNlcm5hbWUiOiJ1c2VyMSJ9.UrVR7yuPxhQT_0ng-kA6dWiBIce7RvDVzZyR5FQ4l4A
+AUTHORIZATION: Bearer {{jwt_token}}
 
 ###
 GET http://{{url}}/protected/user_demo
-AUTHORIZATION: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcIkFzZ2VyIFMuIEjDuGZmbmVyXCIiLCJzdWIiOiJ1c2VyMSIsImV4cCI6MTc1OTQ5NTM3NSwicm9sZXMiOiJVU0VSIiwidXNlcm5hbWUiOiJ1c2VyMSJ9.UrVR7yuPxhQT_0ng-kA6dWiBIce7RvDVzZyR5FQ4l4A
+AUTHORIZATION: Bearer {{jwt_token}}
 
 ###
 POST http://{{url}}/auth/register
