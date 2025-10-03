@@ -2,7 +2,7 @@ package app.security.rest;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import app.utils.Utils;
+import app.core.utils.Utils;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.security.RouteRole;
 

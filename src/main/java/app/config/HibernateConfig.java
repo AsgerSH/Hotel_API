@@ -1,11 +1,10 @@
 package app.config;
 
-import app.entities.Hotel;
-import app.entities.Room;
-import app.populators.HotelPopulator;
-import app.security.Role;
-import app.security.User;
-import app.utils.Utils;
+import app.features.hotel.entities.Hotel;
+import app.features.room.entities.Room;
+import app.security.entities.Role;
+import app.security.entities.User;
+import app.core.utils.Utils;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;

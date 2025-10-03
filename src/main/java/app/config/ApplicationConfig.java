@@ -1,7 +1,7 @@
 package app.config;
 
-import app.exceptions.ApiException;
-import app.security.ISecurityController;
+import app.core.exceptions.ApiException;
+import app.security.rest.ISecurityController;
 import app.security.rest.SecurityController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,8 +11,6 @@ import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 

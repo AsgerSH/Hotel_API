@@ -1,7 +1,7 @@
 package restassured;
 
 import app.config.ApplicationConfig;
-import app.routes.Routes;
+import app.config.Routes;
 import app.security.rest.SecurityRoutes;
 import io.javalin.Javalin;
 import io.restassured.RestAssured;

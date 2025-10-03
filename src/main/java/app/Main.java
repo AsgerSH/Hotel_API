@@ -1,12 +1,8 @@
 package app;
 
 import app.config.ApplicationConfig;
-import app.config.HibernateConfig;
-import app.populators.HotelPopulator;
-import app.routes.Routes;
+import app.config.Routes;
 import app.security.rest.SecurityRoutes;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 
 public class Main {
     public static void main(String[] args) {
