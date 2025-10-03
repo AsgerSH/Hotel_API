@@ -1,5 +1,6 @@
 package app.security;
 
+import app.config.HibernateConfig;
 import app.exceptions.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -15,13 +16,16 @@ public class SecurityDAO implements ISecurityDAO {
     public User getVerifiedUser(String username, String password) throws ValidationException {
         try (EntityManager em = emf.createEntityManager()) {
             User foundUser = em.find(User.class, username);
-            if (foundUser.checkPassword(password)) {
-                return foundUser;
-            } else {
-                throw new ValidationException("Invalid password");
+            if (foundUser == null) {
+                throw new ValidationException("Invalid username or password");
             }
+            if (!foundUser.checkPassword(password)) {
+                throw new ValidationException("Invalid username or password");
+            }
+            return foundUser;
         }
     }
+
 
     @Override
     public User createUser(String username, String password) {
@@ -63,6 +67,24 @@ public class SecurityDAO implements ISecurityDAO {
             foundUser.addRole(foundRole);
             em.getTransaction().commit();
             return foundUser;
+        }
+    }
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
+
+            Role userRole = new Role("USER");
+            Role adminRole = new Role("ADMIN");
+            em.persist(userRole);
+            em.persist(adminRole);
+
+            User user = new User("user1", "password123");
+            user.addRole(userRole);
+            em.persist(user);
+
+            em.getTransaction().commit();
         }
     }
 }

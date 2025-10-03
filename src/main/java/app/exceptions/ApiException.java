@@ -7,7 +7,7 @@ public class ApiException extends RuntimeException {
         super(msg);
         this.code = code;
     }
-    public int getCode(){
+    public int getStatusCode() {
         return code;
     }
 }

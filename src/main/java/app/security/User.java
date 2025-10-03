@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -20,11 +21,12 @@ public class User {
     private String username;
     private String password;
 
-    @ManyToMany
-    @JoinTable(name = "users_roles",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<Role> roles;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "username"),
+            inverseJoinColumns = @JoinColumn(name = "rolename"))
+    private Set<Role> roles = new HashSet<>();
 
     public User(String username, String password) {
         String hashed = BCrypt.hashpw(password, BCrypt.gensalt(12));

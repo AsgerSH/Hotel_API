@@ -1,17 +1,14 @@
 package app.security.rest;
 
-import app.config.HibernateConfig;
-import app.dtos.UserDTO;
-import app.exceptions.ApiException;
-import app.security.ISecurityController;
-import app.security.ISecurityDAO;
-import app.security.SecurityDAO;
-import app.security.User;
-import app.utils.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dk.bugelhartmann.TokenSecurity;
 import dk.bugelhartmann.TokenVerificationException;
+import dk.bugelhartmann.UserDTO;
+import app.exceptions.*;
+import app.config.HibernateConfig;
+import app.security.*;
+import app.utils.Utils;
 import io.javalin.http.*;
 
 import java.text.ParseException;
@@ -36,7 +33,7 @@ public class SecurityController implements ISecurityController {
         return parts[1];
     }
 
-    private static boolean userHasAllowedRole(dk.bugelhartmann.UserDTO user, Set<String> allowedRoles) {
+    private static boolean userHasAllowedRole(UserDTO user, Set<String> allowedRoles) {
         return user.getRoles().stream()
                 .anyMatch(role -> allowedRoles.contains(role.toUpperCase()));
     }
@@ -89,19 +86,6 @@ public class SecurityController implements ISecurityController {
         };
     }
 
-    private boolean isOpenEndpoint(Set<String> allowedRoles) {
-        return allowedRoles.isEmpty() || allowedRoles.contains("ANYONE");
-    }
-
-    private UserDTO validateAndGetUserFromToken(Context ctx) {
-        String token = getToken(ctx);
-        UserDTO verifiedTokenUser = verifyToken(token);
-        if (verifiedTokenUser == null) {
-            throw new UnauthorizedResponse("Invalid user or token");
-        }
-        return verifiedTokenUser;
-    }
-
     @Override
     public Handler authenticate() {
         return ctx -> {
@@ -117,7 +101,7 @@ public class SecurityController implements ISecurityController {
 
             if (isOpenEndpoint(allowedRoles)) return;
 
-            dk.bugelhartmann.UserDTO verifiedTokenUser = validateAndGetUserFromToken(ctx);
+            UserDTO verifiedTokenUser = validateAndGetUserFromToken(ctx);
             ctx.attribute("user", verifiedTokenUser);
         };
     }
@@ -134,7 +118,7 @@ public class SecurityController implements ISecurityController {
             if (isOpenEndpoint(allowedRoles))
                 return;
             // 2. Get user and ensure it is not null
-            dk.bugelhartmann.UserDTO user = ctx.attribute("user");
+            UserDTO user = ctx.attribute("user");
             if (user == null) {
                 throw new ForbiddenResponse("No user was added from the token");
             }
@@ -144,7 +128,23 @@ public class SecurityController implements ISecurityController {
         };
     }
 
-    public String createToken(dk.bugelhartmann.UserDTO user) {
+    private UserDTO verifyToken(String token) {
+        String SECRET = (System.getenv("DEPLOYED") != null)
+                ? System.getenv("SECRET_KEY")
+                : Utils.getPropertyValue("SECRET_KEY", "config.properties");
+
+        try {
+            if (tokenSecurity.tokenIsValid(token, SECRET) && tokenSecurity.tokenNotExpired(token)) {
+                return tokenSecurity.getUserWithRolesFromToken(token);
+            } else {
+                throw new UnauthorizedResponse("Token is not valid");
+            }
+        } catch (ParseException | TokenVerificationException e) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized. Could not verify token");
+        }
+    }
+
+    public String createToken(UserDTO user) {
         try {
             String ISSUER;
             String TOKEN_EXPIRE_TIME;
@@ -165,21 +165,17 @@ public class SecurityController implements ISecurityController {
         }
     }
 
-    private dk.bugelhartmann.UserDTO verifyToken(String token) {
-        String SECRET = (System.getenv("DEPLOYED") != null)
-                ? System.getenv("SECRET_KEY")
-                : Utils.getPropertyValue("SECRET_KEY", "config.properties");
-
-        try {
-            if (tokenSecurity.tokenIsValid(token, SECRET) && tokenSecurity.tokenNotExpired(token)) {
-                return tokenSecurity.getUserWithRolesFromToken(token);
-            } else {
-                throw new UnauthorizedResponse("Token is not valid");
-            }
-        } catch (ParseException | TokenVerificationException e) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized. Could not verify token");
+    private UserDTO validateAndGetUserFromToken(Context ctx) {
+        String token = getToken(ctx);
+        UserDTO verifiedTokenUser = verifyToken(token);
+        if (verifiedTokenUser == null) {
+            throw new UnauthorizedResponse("Invalid user or token");
         }
+        return verifiedTokenUser;
     }
 
+    private boolean isOpenEndpoint(Set<String> allowedRoles) {
+        return allowedRoles.isEmpty() || allowedRoles.contains("ANYONE");
+    }
 
 }
