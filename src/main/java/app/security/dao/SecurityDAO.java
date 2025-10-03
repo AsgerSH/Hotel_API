@@ -63,26 +63,14 @@ public class SecurityDAO implements ISecurityDAO {
         try (EntityManager em = emf.createEntityManager()) {
             User foundUser = em.find(User.class, username);
             Role foundRole = em.find(Role.class, rolename);
-
-            if (foundUser == null) {
+            if (foundUser == null || foundRole == null) {
                 throw new EntityNotFoundException("User not found");
-            }
-            if (foundRole == null) {
-                throw new EntityNotFoundException("Role not found: " + rolename);
             }
 
             em.getTransaction().begin();
             foundUser.addRole(foundRole);
             em.getTransaction().commit();
-
-            User reloaded = em.createQuery(
-                            "SELECT u FROM User u JOIN FETCH u.roles WHERE u.username = :username",
-                            User.class
-                    )
-                    .setParameter("username", username)
-                    .getSingleResult();
-
-            return reloaded;
+            return foundUser;
         }
     }
 
