@@ -1,62 +1,135 @@
 package app.config;
 
-import app.exceptions.HotelNotFoundException;
-import app.exceptions.RoomNotFoundException;
-import app.populators.HotelPopulator;
-import app.routes.Routes;
+import app.exceptions.ApiException;
+import app.security.ISecurityController;
+import app.security.rest.SecurityController;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.javalin.Javalin;
+import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.config.JavalinConfig;
+import io.javalin.http.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+import static io.javalin.apibuilder.ApiBuilder.path;
+
 public class ApplicationConfig {
-    private static Routes routes = new Routes();
+    private ObjectMapper jsonMapper = new ObjectMapper();
+    private Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
+    private static ApplicationConfig appConfig;
+    private static JavalinConfig javalinConfig;
+    private static Javalin app;
+    private static ISecurityController securityController = new SecurityController();
 
-    public static void configuration(JavalinConfig config){
-        config.showJavalinBanner = false;
-        config.bundledPlugins.enableDevLogging();
-        config.staticFiles.add("/public");
-        config.http.defaultContentType = "application/json";
-        config.bundledPlugins.enableRouteOverview("/routes");
-        config.router.contextPath = "/api/v1"; // base path for all endpoints
-        config.router.apiBuilder(routes.getRoutes());
+    private ApplicationConfig() {
     }
 
-    public static Javalin startServer(int port) {
-        routes = new Routes();
-        var app = Javalin.create(ApplicationConfig::configuration);
-
-        // Tilføjet så jeg populerer listerne af hoteller og værelser før serveren starter
-        var emf = HibernateConfig.getEntityManagerFactory();
-        try (var em = emf.createEntityManager()) {
-            long count = em.createQuery("SELECT COUNT(h) FROM Hotel h", Long.class).getSingleResult();
-            if (count == 0) {
-                HotelPopulator.populateHotels();
-            }
+    public static ApplicationConfig getInstance() {
+        if (appConfig == null) {
+            appConfig = new ApplicationConfig();
         }
-
-        // Tilføjet errorhandling (PT3 i opagven)
-        app.exception(IllegalArgumentException.class, (e, ctx) -> {
-            ctx.status(400).json("Invalid hotel or room: " + e.getMessage());
-        });
-
-        app.exception(HotelNotFoundException.class, (e, ctx) -> {
-            ctx.status(404).json(Map.of("error", e.getMessage()));
-        });
-
-        app.exception(RoomNotFoundException.class, (e, ctx) -> {
-            ctx.status(404).json(Map.of("error", e.getMessage()));
-        });
-
-        app.exception(Exception.class, (e, ctx) -> {
-            ctx.status(500).json("Internal Server Error: " + e.getMessage());
-        });
-
-        app.start(port);
-        return app;
+        return appConfig;
     }
 
-    public static void stopServer(Javalin app) {
+    public ApplicationConfig initiateServer() {
+        app = Javalin.create(config -> {
+            javalinConfig = config;
+            config.bundledPlugins.enableDevLogging(); // enables extensive development logging in terminal
+            //config.staticFiles.add("/public"); // enables serving of static files from the public folder in the classpath. PROs: easy to use, CONs: you have to restart the server every time you change a file
+            config.http.defaultContentType = "application/json"; // default content type for requests
+            config.router.contextPath = "/api"; // base path for all routes
+            config.bundledPlugins.enableRouteOverview("/routes"); // html overview of all registered routes at /routes for api documentation: https://javalin.io/news/2019/08/11/javalin-3.4.1-released.html
+        });
+        return appConfig;
+    }
+
+    public ApplicationConfig setRoute(EndpointGroup route) {
+        javalinConfig.router.apiBuilder(() -> {
+            path("/", route);
+        });
+        return appConfig;
+    }
+
+
+    public ApplicationConfig setCORS() {
+        app.before(ctx -> {
+            setCorsHeaders(ctx);
+        });
+        app.options("/*", ctx -> { // Burde nok ikke være nødvendig?
+            setCorsHeaders(ctx);
+        });
+        return appConfig;
+    }
+
+    private static void setCorsHeaders(Context ctx) {
+        ctx.header("Access-Control-Allow-Origin", "*");
+        ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+        ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        ctx.header("Access-Control-Allow-Credentials", "true");
+    }
+
+    //    Adding below methods to ApplicationConfig, means that EVERY ROUTE will be checked for security roles. So open routes must have a role of ANYONE
+    public ApplicationConfig checkSecurityRoles() {
+        app.beforeMatched(securityController.authenticate()); // check if there is a valid token in the header
+        app.beforeMatched(securityController.authorize()); // check if the user has the required role
+        return appConfig;
+    }
+
+    public ApplicationConfig startServer(int port) {
+        app.start(port);
+        return appConfig;
+    }
+
+    public ApplicationConfig stopServer() {
         app.stop();
+        return appConfig;
+    }
+//    public ApplicationConfig setApiExceptionHandling() {
+//        app.exception(ApiException.class, (e, ctx) -> {
+//            int statusCode = e.getStatusCode();
+//            ObjectNode on = jsonMapper
+//                    .createObjectNode()
+//                    .put("status", statusCode)
+//                    .put("msg", e.getMessage());
+//            ctx.json(on);
+//            ctx.status(statusCode);
+//        });
+//        return appConfig;
+//    }
+
+
+
+    public ApplicationConfig setGeneralExceptionHandling() {
+        app.exception(Exception.class, (e, ctx) -> {
+            int statusCode = (e instanceof ApiException apiEx)
+                    ? apiEx.getStatusCode()
+                    : 500;
+
+            String message = (e instanceof ApiException)
+                    ? e.getMessage()
+                    : "Internal server error";
+
+            logger.error("An exception occurred", e);
+
+            ObjectNode on = jsonMapper
+                    .createObjectNode()
+                    .put("status", statusCode)
+                    .put("msg", message);
+
+            ctx.json(on);
+            ctx.status(statusCode);
+        });
+        return appConfig;
+    }
+
+    public ApplicationConfig beforeFilter() {
+        app.before(ctx -> {
+            String pathInfo = ctx.req().getPathInfo();
+            ctx.req().getHeaderNames().asIterator().forEachRemaining(el -> System.out.println(el));
+        });
+        return appConfig;
     }
 }

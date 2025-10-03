@@ -20,8 +20,8 @@ public class SecurityRoutes {
 //                get("/resetdata", personEntityController.resetData());
 //                get("/{id}", personEntityController.getById());
 
-            post("/login", securityController.login());
-            post("/register", securityController.register());
+            post("/login", securityController.login(), Role.ANYONE);
+            post("/register", securityController.register(), Role.ANYONE);
 //                put("/{id}", personEntityController.update());
 //                delete("/{id}", personEntityController.delete());
         });

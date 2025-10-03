@@ -12,6 +12,10 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
+        <!-- DATABASE PROJECT NAME ON SERVER  -->
+        <db.name>javalindemo</db.name>
+        <javalin.port>7070</javalin.port>
+
         <jackson.version>2.15.0</jackson.version>
         <lombok.version>1.18.32</lombok.version>
         <hibernate.version>6.2.4.Final</hibernate.version>
@@ -26,6 +30,7 @@
         <rest-assured.version>5.3.2</rest-assured.version>
         <jbcrypt.version>0.4</jbcrypt.version>
         <token.security.version>1.0.2</token.security.version>
+
 
 
 

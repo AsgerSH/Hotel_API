@@ -1,6 +1,8 @@
 package restassured;
 
 import app.config.ApplicationConfig;
+import app.routes.Routes;
+import app.security.rest.SecurityRoutes;
 import io.javalin.Javalin;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.*;
@@ -14,16 +16,25 @@ class HotelApiTest {
 
     @BeforeAll
     static void setup() {
-        app = ApplicationConfig.startServer(7070); // or 0 for random port
+        ApplicationConfig
+                .getInstance()
+                .initiateServer()
+                .checkSecurityRoles()
+                .setRoute(SecurityRoutes.getSecuredRoutes())
+                .setRoute(new Routes().getRoutes())
+                .setRoute(new SecurityRoutes().getSecurityRoute)
+                .startServer(7007)
+                .setCORS()
+                .setGeneralExceptionHandling(); // or 0 for random port
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = 7070;
         RestAssured.basePath = "/api/v1";
     }
 
-    @AfterAll
-    static void tearDown() {
-        ApplicationConfig.stopServer(app);
-    }
+//    @AfterAll
+//    static void tearDown() {
+//        ApplicationConfig.stopServer(app);
+//    }
 
     @Test
     void getHotels() {
